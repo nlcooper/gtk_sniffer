@@ -1,0 +1,26 @@
+WiFi Sniffer 1.0
+Noah Cooper <noahcooper@allionusa.com>
+
+
+Forthcoming: further refinements
+
+Requires: libgtk+3 3.0, iw, ip, tcpdump, nmcli
+
+------------------------------------------------------------------------
+
+Usage:
+
+'gksudo python 
+
+
+------------------------------------------------------------------------
+
+Installation script:
+
+
+------------------------------------------------------------------------
+
+changelog:
+
+v1.0
+Rewritten with GTK+3 and python 2.7
