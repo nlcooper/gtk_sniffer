@@ -29,6 +29,9 @@ def main():
     print(interface.wiphy)
     print(interface.MAC)
     print(interface.mode)
+    print(interface.channel)
+    print(interface.width)
+    print(interface.center)
 if __name__ == '__main__':
     print('run')
     main()
