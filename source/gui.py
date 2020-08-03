@@ -1,31 +1,14 @@
-#
-#
-# Noah Cooper
-# cooper.noah@gmail.com
-
 #!/usr/bin/env python
-'''
-Noah Cooper <cooper.noah@gmail.com>
-            <noahcooper@allionusa.com>
 
-requires gksu to be installed
+# Noah Cooper <cooper.noah@gmail.com>
+            
 
-'sudo apt update && sudo apt install gksu'
-
-once gksu is installed, launch anywhere with
-
-'gksudo python /path/to/sniffer.py'
-
-pcap files are generated in directory in which the program is run
-'''
-
+import adapter
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from datetime import datetime
-
-
-
+from time import sleep
 class ComboBoxWindow(Gtk.Window):
     def __init__(self):
         #initialize window
@@ -55,7 +38,7 @@ class ComboBoxWindow(Gtk.Window):
         label = Gtk.Label()
         label.set_markup('<b>Width</b>')
         vbox.pack_start(label, True, True, 0)
-        widths = ['HT20', 'HT40-', 'HT40+', '80']
+        widths = ['HT20', 'HT40-', 'HT40+', '80MHz']
         width_combo = Gtk.ComboBoxText()
         width_combo.set_entry_text_column(0)
         width_combo.connect('changed', self.on_width_combo_changed)
@@ -75,64 +58,30 @@ class ComboBoxWindow(Gtk.Window):
         self.add(vbox)
 
 # functions to bind to signals from gui
-    def on_frequency_combo_changed(self, combo):
-        choice = combo.get_active()
-        print(choice)
-        if '2.4' in str(choice):
-            [self.__init__.channel_combo.append_text(x) for x in self.low]
-        else:
-            [self.__init__.channel_combo.append_text(x) for x in self.high]
     def on_channel_combo_changed(self, combo):
         choice = combo.get_active_text()
-
+        interface.channel = choice
+        print(interface.channel)
     def on_width_combo_changed(self, combo):
         choice = combo.get_active_text()
-
+        interface.width = choice
+        print(interface.width)
     def on_switch_activated(self, switch, gparam):
-        '''
-        capture using tcpdump using settings when toggled, return to managed
-        mode when toggling back to off
-        '''
         if switch.get_active():
-            print('Disconnecting from any wireless network...')
-            disconnect()
-            print('Putting {} into monitor mode...'.format(interface))
-            delete()
-            enable_monitor()
-            print('Bringing {} back up...'.format(interface))
-            up()
-            call(
-                'iw {} set channel {} {}'.format(interface, channel, width),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True)
-            global capfile
-            capfile = name_file()
-            print(
-                'Writing output from {} on channel {} with a width of {} to {}'.
-                format(interface, channel, width, capfile))
-            global dump
-            dump = Popen(
-                'tcpdump -i {} -ttvvv -s 0 -w {}.pcap'.format(
-                    interface, capfile),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True)
+            interface.raise_adapter()
+            sleep(1)
+            interface.set_channel()
+            sleep(1)
+            sniff = interface.start_sniff()
         else:
-            print('Closing {}...'.format(capfile))
-            dump.terminate()
-            print('Switching to managed mode...')
-            delete()
-            disable_monitor()
-            print('Bringing {} up'.format(interface))
-            up()
-            print('Attempting to reconnect to wireless network...')
+            sniff.terminate()
+            interface.del_adapter()
+            managed.add_adapter()
+
+            
 
 
 def name_file():
-    '''
-    name capture file using date and time
-    '''
     print('Using date and time for file name.')
     file_name = str(datetime.now())[:-9].replace(" ", "_").replace(
         ':', '') + "_ch{}_{}".format(channel, width)
@@ -140,8 +89,36 @@ def name_file():
 
 
 
+
+def test_support():
+    test = adapter.Adapter.is_supported()
+    if not test:
+        print('Unable to find wireless device capable of monitor mode.')
+        raise SystemExit(1)
+
+def select_adapter(adapters):
+    if len(adapters) == 1:
+        return adapters[0]
+    print('Please choose an adapter to use:')
+    for i, n in enumerate(adapters, start=1):
+       print(i, n)
+    choice = input('Interface number: ')
+    try:
+        choice = int(choice) - 1
+    except:
+        raise TypeError('Please input the number corresponding to your adapter.')
+    return adapters[choice]
+
+
 if __name__ == '__main__':
-    #interface = find_adapter()
+    test_support()
+    ifaces = adapter.Adapter.get_adapters()
+    wifi = select_adapter(ifaces)
+    managed = adapter.Adapter(wifi)
+    interface = adapter.Sniffer(wifi)
+    managed.del_adapter()
+    sleep(1)
+    interface.add_adapter()
     win = ComboBoxWindow()
     win.connect("delete-event", Gtk.main_quit)
     win.show_all()

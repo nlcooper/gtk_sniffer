@@ -7,8 +7,6 @@ class Adapter():
         self.wiphy = None
         self.mode = None
         self.MAC = None
-        self.channel = None
-        self.width = None
         self.get_info()
 
     @staticmethod
@@ -32,49 +30,51 @@ class Adapter():
         self.wiphy = re.search(r'wiphy\s(\w)', proc.stdout)[1]
         self.MAC = re.search(r'addr\s([0-9a-f]{2}(?::[0-9a-f]{2}){5})', proc.stdout)[1]
         self.mode = re.search(r'type\s(\w*)', proc.stdout)[1]
-        self.channel = re.search(r'channel\s(\w+)', proc.stdout)[1]
-        self.width = re.search(r'width:\s(\w+)', proc.stdout)[1]
-        self.center = re.search(r'center1:\s(\w+)', proc.stdout)[1]
+
 
     def del_adapter(self):
         cmd = f'iw dev {self.name} interface del'
-        proc = subprocess.run(cmd.split())
+        proc = subprocess.run(cmd.split(), capture_output=True, encoding='utf-8')
+        print(proc.stdout)
 
     def add_adapter(self):
-        cmd = f'iw phy phy{self.wiphy} interface add type managed'
-        proc = subprocess.run(cmd.split())
+        cmd = f'iw phy phy{self.wiphy} interface add {self.name} type managed'
+        proc = subprocess.run(cmd.split(), capture_output=True, encoding='utf-8')
+        print(proc.stdout)
 
     def raise_adapter(self):
         cmd = f'ip link set {self.name} up'
-        proc = subprocess.run(cmd.split())
+        proc = subprocess.run(cmd.split(), capture_output=True, encoding='utf-8')
+        print(proc.stdout)
 
     def lower_adapter(self):
         cmd = f'ip link set {self.name} down'
-        proc = subprocess.run(cmd.split())
+        proc = subprocess.run(cmd.split(), capture_output=True, encoding='utf-8')
+        print(proc.stdout)
 
-    def set_chan(self, channel, width):
-        cmd = f'iw {self.name} set {channel} {width}'
-        proc = subprocess.run(cmd.split())
-    
 
 class Sniffer(Adapter):
-    def __init__(self):
+    def __init__(self, name):
         self.channel = None
         self.width = None
-        super.__init__(self)
+        super().__init__(name)
 
     def add_adapter(self):
-        cmd = f'iw dev phy phy{self.wiphy} interface add type monitor'
-        proc = subprocess.run(cmd.split())
-
-    def set_chan(self, channel, width):
-        cmd = f'iw {self.name} set channel {channel} {width}'
-        proc = subprocess.run(cmd.split())
+        cmd = f'iw phy phy{self.wiphy} interface add {self.name} type monitor'
+        print(cmd)
+        proc = subprocess.run(cmd.split(), capture_output=True, encoding='utf-8')
+        print(proc.stdout)
 
     def start_sniff(self):
         cmd = f'tcpdump -ttttvvv -s0 -i {self.name} -w output.pcap'
-        proc = subprocess.run(cmd.split())
+        proc = subprocess.run(cmd.split(), capture_output=True, encoding='utf-8')
+        print(proc.stdout)
         return proc
+
+    def set_channel(self):
+            cmd = f'iw {self.name} set channel {self.channel} {self.width}'
+            proc = subprocess.run(cmd.split(), capture_output=True, encoding='utf-8')
+            print(proc.stdout)
 
 if __name__ == '__main__':
     print('run')

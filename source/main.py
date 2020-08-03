@@ -1,4 +1,5 @@
 import adapter
+import gui
 
 def test_support():
     test = adapter.Adapter.is_supported()
@@ -32,6 +33,11 @@ def main():
     print(interface.channel)
     print(interface.width)
     print(interface.center)
+    #interface = find_adapter()
+    win = gui.ComboBoxWindow()
+    win.connect("delete-event", Gtk.main_quit)
+    win.show_all()
+    Gtk.main()
 if __name__ == '__main__':
     print('run')
     main()
